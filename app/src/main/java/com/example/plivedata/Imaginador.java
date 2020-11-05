@@ -12,35 +12,47 @@ public class Imaginador {
 
 
     interface ImaginadorListener{
-        void cuandoDeLaOrden(String orden);
+        void cuandoImagine(String orden);
     }
 
     Random random = new Random();
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     ScheduledFuture<?> imaginar;
 
-    LiveData<String> ordenLiveData = new LiveData<String>() {
+    LiveData<String> imaginacionLiveData = new LiveData<String>() {
+        @Override
+        protected void onActive() {
+            super.onActive();
 
+            iniciarImaginar(new ImaginadorListener() {
+                @Override
+                public void cuandoImagine(String imaginacion) {
+                    postValue(imaginacion);
+                }
+            });
+        }
+
+        @Override
+        protected void onInactive() {
+            super.onInactive();
+
+            pararImaginar();
+        }
     };
 
-    void iniciar(final ImaginadorListener imaginadorListener) {
+    void iniciarImaginar(final ImaginadorListener imaginadorListener) {
         if (imaginar == null || imaginar.isCancelled()) {
             imaginar = scheduler.scheduleAtFixedRate(new Runnable() {
-                int imagen;
-                int repeticiones = -1;
-
                 @Override
                 public void run() {
-                    if (repeticiones < 0) {
-                        imagen = random.nextInt(5) + 1;
-                    }
-                    imaginadorListener.cuandoDeLaOrden("Imaginar" + imagen);
+                    int imagen = random.nextInt(5) + 1;
+                    imaginadorListener.cuandoImagine("IMAGINAR" + imagen);
                 }
-            }, 0, 1, SECONDS);
+            }, 0, 3, SECONDS);
         }
     }
 
-    void  PararImaginar() {
+    void  pararImaginar() {
         if (imaginar != null){
             imaginar.cancel(true);
         }
